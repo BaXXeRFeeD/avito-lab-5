@@ -17,8 +17,11 @@ class FakeService:
         return self._days
 
 
-def test_weather_history_endpoint_returns_normalized_payload():
-    main._service = FakeService(
+def test_weather_history_endpoint_returns_normalized_payload(monkeypatch):
+    monkeypatch.setattr(
+        main,
+        "_service",
+        FakeService(
         days=[
             DayWeather(
                 date=date(2024, 1, 1),
@@ -27,6 +30,7 @@ def test_weather_history_endpoint_returns_normalized_payload():
                 precipitation_sum=0.5,
             )
         ]
+        ),
     )
 
     with main.app.test_client() as client:
@@ -52,11 +56,15 @@ def test_weather_history_endpoint_returns_normalized_payload():
     assert payload["source"] == "open-meteo"
 
 
-def test_weather_history_endpoint_rejects_invalid_date_range():
-    main._service = FakeService(
-        error=InvalidDateRangeError(
-            "start_date must be earlier than or equal to end_date."
-        )
+def test_weather_history_endpoint_rejects_invalid_date_range(monkeypatch):
+    monkeypatch.setattr(
+        main,
+        "_service",
+        FakeService(
+            error=InvalidDateRangeError(
+                "start_date must be earlier than or equal to end_date."
+            )
+        ),
     )
 
     with main.app.test_client() as client:
@@ -70,9 +78,13 @@ def test_weather_history_endpoint_rejects_invalid_date_range():
     }
 
 
-def test_weather_history_endpoint_surfaces_upstream_payload_errors():
-    main._service = FakeService(
-        error=UpstreamPayloadError("Open-Meteo returned an empty daily payload.")
+def test_weather_history_endpoint_surfaces_upstream_payload_errors(monkeypatch):
+    monkeypatch.setattr(
+        main,
+        "_service",
+        FakeService(
+            error=UpstreamPayloadError("Open-Meteo returned an empty daily payload.")
+        ),
     )
 
     with main.app.test_client() as client:

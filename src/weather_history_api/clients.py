@@ -81,7 +81,12 @@ class OpenMeteoArchiveClient:
 
         return self._map_days(response.json())
 
-    def _map_days(self, payload: dict) -> list[DayWeather]:
+    def _map_days(self, payload: object) -> list[DayWeather]:
+        if not isinstance(payload, dict):
+            raise UpstreamPayloadError(
+                "Open-Meteo payload must be a JSON object."
+            )
+
         daily = payload.get("daily")
         if not isinstance(daily, dict):
             raise UpstreamPayloadError("Open-Meteo payload does not contain daily data.")
@@ -114,7 +119,7 @@ class OpenMeteoArchiveClient:
         for index, raw_date in enumerate(columns["time"]):
             try:
                 parsed_date = date.fromisoformat(raw_date)
-            except ValueError as exc:
+            except (TypeError, ValueError) as exc:
                 raise UpstreamPayloadError(
                     "Open-Meteo returned a date with an invalid format."
                 ) from exc
